@@ -4,14 +4,13 @@ import SearchIcon from "@mui/icons-material/Search";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-// Component to search hospitals based on state and city selection
 export default function SearchHospital() {
   const [states, setStates] = useState([]);
   const [cities, setCities] = useState([]);
   const [formData, setFormData] = useState({ state: "", city: "" });
   const navigate = useNavigate();
 
-  // Fetch all states on component mount
+  // Fetch all states on mount
   useEffect(() => {
     const fetchStates = async () => {
       try {
@@ -26,7 +25,7 @@ export default function SearchHospital() {
     fetchStates();
   }, []);
 
-  // Fetch cities dynamically when state changes
+  // Fetch cities whenever state changes
   useEffect(() => {
     const fetchCities = async () => {
       setCities([]);
@@ -41,9 +40,7 @@ export default function SearchHospital() {
       }
     };
 
-    if (formData.state) {
-      fetchCities();
-    }
+    if (formData.state) fetchCities();
   }, [formData.state]);
 
   const handleChange = (e) => {
@@ -64,11 +61,12 @@ export default function SearchHospital() {
       onSubmit={handleSubmit}
       sx={{
         display: "flex",
-        gap: 4,
+        gap: 3,
         justifyContent: "space-between",
         flexDirection: { xs: "column", md: "row" },
       }}
     >
+      {/* State Dropdown */}
       <Select
         displayEmpty
         id="state"
@@ -84,7 +82,7 @@ export default function SearchHospital() {
         sx={{ minWidth: 200, width: "100%" }}
       >
         <MenuItem disabled value="">
-          State
+          Select State
         </MenuItem>
         {states.map((state) => (
           <MenuItem key={state} value={state}>
@@ -93,6 +91,7 @@ export default function SearchHospital() {
         ))}
       </Select>
 
+      {/* City Dropdown */}
       <Select
         displayEmpty
         id="city"
@@ -108,7 +107,7 @@ export default function SearchHospital() {
         sx={{ minWidth: 200, width: "100%" }}
       >
         <MenuItem disabled value="">
-          City
+          Select City
         </MenuItem>
         {cities.map((city) => (
           <MenuItem key={city} value={city}>
@@ -117,12 +116,14 @@ export default function SearchHospital() {
         ))}
       </Select>
 
+      {/* Search Button */}
       <Button
+        id="searchBtn"
         type="submit"
         variant="contained"
         size="large"
         startIcon={<SearchIcon />}
-        sx={{ py: "15px", px: 8, flexShrink: 0 }}
+        sx={{ py: "15px", px: 6, flexShrink: 0 }}
         disableElevation
       >
         Search

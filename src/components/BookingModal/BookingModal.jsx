@@ -1,168 +1,128 @@
-import { Container, Stack, Box, Typography } from "@mui/material";
-import axios from "axios";
-import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import HospitalCard from "../HospitalCard/HospitalCard";
-import icon from "../../assets/tick.jpg";
-import cta from "../../assets/cta.jpg";
-import SearchHospital from "../SearchHospital/SearchHospital";
-import BookingModal from "../BookingModal/BookingModal";
-import AutohideSnackbar from "../AutohideSnackbar/AutohideSnackbar";
-import NavBar from "../Navbar/Navbar";
+import {
+  Modal,
+  Typography,
+  Box,
+  TextField,
+  Button,
+  Stack,
+} from "@mui/material";
+import { useState } from "react";
+import { format } from "date-fns";
 
-export default function Search() {
-  const [seachParams, setSearchParams] = useSearchParams();
-  const [hospitals, setHospitals] = useState([]);
-  const [state, setState] = useState(seachParams.get("state"));
-  const [city, setCity] = useState(seachParams.get("city"));
-  const availableSlots = {
-    morning: ["11:30 AM"],
-    afternoon: ["12:00 PM", "12:30 PM", "01:30 PM", "02:00 PM", "02:30 PM"],
-    evening: ["06:00 PM", "06:30 PM", "07:00 PM", "07:30 PM"],
+export default function BookingModal({
+  setOpen,
+  open,
+  bookingDetails,
+  showSuccessMessage,
+}) {
+  const [email, setEmail] = useState("");
+
+  const handleBooking = (e) => {
+    e.preventDefault();
+    triggerEvent();
+
+    const bookings = localStorage.getItem("bookings") || "[]";
+
+    const oldBookings = JSON.parse(bookings);
+
+    localStorage.setItem(
+      "bookings",
+      JSON.stringify([
+        ...oldBookings,
+        { ...bookingDetails, bookingEmail: email },
+      ])
+    );
+    showSuccessMessage(true);
+    setEmail("");
+    setOpen(false);
   };
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [bookingDetails, setBookingDetails] = useState({});
-  const [showBookingSuccess, setShowBookingSuccess] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
-  //API to fetch hospitals based on state and city selection 
-  useEffect(() => {
-    const getHospitals = async () => {
-      setHospitals([]);
-      setIsLoading(true);
-      try {
-        const data = await axios.get(
-          `https://meddata-backend.onrender.com/data?state=${state}&city=${city}`
-        );
-        setHospitals(data.data);
-        setIsLoading(false);
-      } catch (err) {
-        console.log(err);
-        setIsLoading(false);
-      }
-    };
+  const triggerEvent = () => {
+    // Ensure dataLayer is defined
+    window.dataLayer = window.dataLayer || [];
 
-    if (state && city) {
-      getHospitals();
+    // Function to push the first_visit event to the dataLayer
+    function triggerFirstVisitEvent() {
+      window.dataLayer.push({
+        event: "first_visit",
+        eventDate: new Date().toISOString(), // Optional: track the exact time of the event
+      });
     }
-  }, [state, city]);
 
-  useEffect(() => {
-    setState(seachParams.get("state"));
-    setCity(seachParams.get("city"));
-  }, [seachParams]);
+    triggerFirstVisitEvent();
+  };
 
-  // show booking modal
-  const handleBookingModal = (details) => {
-    setBookingDetails(details);
-    setIsModalOpen(true);
+  const formatDate = (day) => {
+    if (day) {
+      const date = new Date(day);
+      return format(date, "E, d LLL");
+    } else {
+      return null;
+    }
   };
 
   return (
-    <>
-      <NavBar />
+    <Modal open={open} onClose={() => setOpen(false)}>
       <Box
         sx={{
-          background: "linear-gradient(#EFF5FE, rgba(241,247,255,0.47))",
-          width: "100%",
-          pl: 0,
+          width: "95%",
+          maxWidth: 600,
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          boxShadow: 24,
+          p: { xs: 3, md: 4 },
+          outline: 0,
+          bgcolor: "#fff",
+          borderRadius: 2,
         }}
       >
-        <Box
-          sx={{
-            position: "relative",
-            background: "linear-gradient(90deg, #2AA7FF, #0C8CE5)",
-            borderBottomLeftRadius: "1rem",
-            borderBottomRightRadius: "1rem",
-          }}
-        >
-          <Container
-            maxWidth="xl"
-            sx={{
-              background: "#fff",
-              p: 3,
-              borderRadius: 2,
-              transform: "translatey(50px)",
-              mb: "50px",
-              boxShadow: "0 0 10px rgba(0,0,0,0.1)",
-            }}
-          >
-            <SearchHospital />
-          </Container>
-        </Box>
-
-        <Container maxWidth="xl" sx={{ pt: 8, pb: 10, px: { xs: 0, md: 4 } }}>
-          {hospitals.length > 0 && (
-            <Box sx={{ mb: 3 }}>
-              <Typography
-                component="h1"
-                fontSize={24}
-                lineHeight={1.1}
-                mb={2}
-                fontWeight={500}
+        <Typography component="h3" variant="h3">
+          Confirm booking
+        </Typography>
+        <Typography fontSize={14} mb={3}>
+          <Box component="span">
+            Please enter your email to confirm booking for{" "}
+          </Box>
+          <Box component="span" fontWeight={600}>
+            {`${bookingDetails.bookingTime} on ${formatDate(
+              bookingDetails.bookingDate
+            )}`}
+          </Box>
+        </Typography>
+        <form onSubmit={handleBooking}>
+          <Stack alignItems="flex-start" spacing={2}>
+            <TextField
+              type="email"
+              label="Enter your email"
+              variant="outlined"
+              fullWidth
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            <Stack direction="row" spacing={1}>
+              <Button
+                type="submit"
+                variant="contained"
+                size="large"
+                disableElevation
               >
-                {`${hospitals.length} medical centers available in `}
-                <span style={{ textTransform: "capitalize" }}>
-                  {city.toLocaleLowerCase()}
-                </span>
-              </Typography>
-              <Stack direction="row" spacing={2}>
-                <img src={icon} height={24} width={24} alt="icon" />
-                <Typography color="#787887" lineHeight={1.4}>
-                  Book appointments with minimum wait-time & verified doctor
-                  details
-                </Typography>
-              </Stack>
-            </Box>
-          )}
-
-          <Stack alignItems="flex-start" direction={{ md: "row" }}>
-            <Stack
-              mb={{ xs: 4, md: 0 }}
-              spacing={3}
-              width={{ xs: 1, md: "calc(100% - 384px)" }}
-              mr="24px"
-            >
-              {hospitals.length > 0 &&
-                hospitals.map((hospital) => (
-                  <HospitalCard
-                    key={hospital["Hospital Name"]}
-                    details={hospital}
-                    availableSlots={availableSlots}
-                    handleBooking={handleBookingModal}
-                  />
-                ))}
-
-              {isLoading && (
-                <Typography variant="h3" bgcolor="#fff" p={3} borderRadius={2}>
-                  Loading...
-                </Typography>
-              )}
-
-              {!state && (
-                <Typography variant="h3" bgcolor="#fff" p={3} borderRadius={2}>
-                  Please select a state and city
-                </Typography>
-              )}
+                Confirm
+              </Button>
+              <Button
+                variant="outlined"
+                size="large"
+                disableElevation
+                onClick={() => setOpen(false)}
+              >
+                Cancel
+              </Button>
             </Stack>
-
-            <img src={cta} width={360} height="auto" alt="banner" />
           </Stack>
-        </Container>
-
-        <BookingModal
-          open={isModalOpen}
-          setOpen={setIsModalOpen}
-          bookingDetails={bookingDetails}
-          showSuccessMessage={setShowBookingSuccess}
-        />
-
-        <AutohideSnackbar
-          open={showBookingSuccess}
-          setOpen={setShowBookingSuccess}
-          message="Booking Successful"
-        />
+        </form>
       </Box>
-    </>
+    </Modal>
   );
 }

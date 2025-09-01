@@ -11,8 +11,8 @@ export default function FooterLink({ children, href = "#" }) {
       fontSize={14}
       sx={{ display: "inline-flex", alignItems: "center" }}
     >
-      <Stack direction="row" alignItems="center" gap={0.5}>
-        <KeyboardArrowRightIcon fontSize="small" />
+      <Stack direction="row"  gap={0.5}>
+        <KeyboardArrowRightIcon />
         {children}
       </Stack>
     </Link>
